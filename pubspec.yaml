@@ -1,5 +1,5 @@
 name: moulat_keskes
-description: "A new Flutter project."
+description: "Moulat Keskes — homemade Mauritanian meals, made with love."
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -9,6 +9,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  supabase_flutter: ^2.10.0
+  url_launcher: ^6.3.2
+  geolocator: ^14.0.2
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
 
 dev_dependencies:
   flutter_test:
@@ -17,3 +24,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/
+  fonts:
+    - family: Tajawal
+      fonts:
+        - asset: assets/fonts/Tajawal-Regular.ttf
+        - asset: assets/fonts/Tajawal-Bold.ttf
+          weight: 700

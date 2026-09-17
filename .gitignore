@@ -32,6 +32,11 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+.tools/
+.env
+.env.*
+!.env.example
+supabase/config.local.json
 
 # Symbolication related
 app.*.symbols
