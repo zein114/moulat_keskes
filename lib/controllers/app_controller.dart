@@ -13,8 +13,12 @@ class AppController extends ChangeNotifier {
     _auth = client?.auth.onAuthStateChange.listen((event) {
       if (event.event == AuthChangeEvent.passwordRecovery) recovering = true;
       if (event.event == AuthChangeEvent.signedOut) {
-        orders = []; cart.clear(); favorites.clear(); sellerMode = false;
-        role = 'customer'; name = 'ضيفنا العزيز';
+        orders = [];
+        cart.clear();
+        favorites.clear();
+        sellerMode = false;
+        role = 'customer';
+        name = 'ضيفنا العزيز';
       }
       unawaited(refresh());
     });
@@ -43,9 +47,13 @@ class AppController extends ChangeNotifier {
   Meal meal(String id) => meals.firstWhere((m) => m.id == id);
   Seller seller(String id) => sellers.firstWhere((s) => s.id == id);
   List<Meal> get ownMeals => meals.where((m) => m.sellerId == userId).toList();
-  List<FoodOrder> get visibleOrders =>
-      sellerMode ? orders.where((o) => o.sellerId == userId).toList()
-      : demo ? orders : orders.where((o) => o.customerId == client?.auth.currentUser?.id).toList();
+  List<FoodOrder> get visibleOrders => sellerMode
+      ? orders.where((o) => o.sellerId == userId).toList()
+      : demo
+      ? orders
+      : orders
+            .where((o) => o.customerId == client?.auth.currentUser?.id)
+            .toList();
   double distance(Seller s) =>
       Geolocator.distanceBetween(latitude, longitude, s.lat, s.lng) / 1000;
 
@@ -79,11 +87,27 @@ class AppController extends ChangeNotifier {
                 .map(FoodOrder.fromJson)
                 .toList();
       }
-      if (version != _refreshVersion || _disposed || client?.auth.currentUser?.id != refreshUser) return;
+      if (version != _refreshVersion ||
+          _disposed ||
+          client?.auth.currentUser?.id != refreshUser) {
+        return;
+      }
       sellers = s.map(Seller.fromJson).toList();
       meals = m.map(Meal.fromJson).toList();
+      final removedMeals = cart.keys
+          .where((id) => !meals.any((meal) => meal.id == id))
+          .toList();
+      for (final id in removedMeals) {
+        cart.remove(id);
+      }
+      if (removedMeals.isNotEmpty) {
+        error =
+            'بعض الوجبات لم تعد متاحة وتمت إزالتها. راجع السلة قبل التأكيد.';
+      }
       if (profile != null) {
-        name = profile['name']; role = profile['role']; orders = nextOrders;
+        name = profile['name'];
+        role = profile['role'];
+        orders = nextOrders;
       } else {
         orders = [];
         role = 'customer';
@@ -110,11 +134,16 @@ class AppController extends ChangeNotifier {
   }
 
   void add(Meal m, [int count = 1]) {
-    if (!demo && signedIn && m.sellerId == userId && count > 0) throw StateError('لا يمكنك طلب وجبتك الخاصة');
-    if (count > 0 && !seller(m.sellerId).open)
+    if (!demo && signedIn && m.sellerId == userId && count > 0) {
+      throw StateError('لا يمكنك طلب وجبتك الخاصة');
+    }
+    if (count > 0 && !seller(m.sellerId).open) {
       throw StateError('المطبخ مغلق الآن');
+    }
     final next = (cart[m.id] ?? 0) + count;
-    if (next > m.stock) throw StateError('الكمية المطلوبة غير متوفرة');
+    if (count > 0 && next > m.stock) {
+      throw StateError('الكمية المطلوبة غير متوفرة');
+    }
     if (next <= 0) {
       cart.remove(m.id);
     } else {
@@ -128,7 +157,12 @@ class AppController extends ChangeNotifier {
     if (quantity <= 0) throw StateError('أدخل كمية صحيحة');
     final candidates =
         meals
-            .where((m) => m.category == category && seller(m.sellerId).open && (demo || !signedIn || m.sellerId != userId))
+            .where(
+              (m) =>
+                  m.category == category &&
+                  seller(m.sellerId).open &&
+                  (demo || !signedIn || m.sellerId != userId),
+            )
             .toList()
           ..sort(
             (a, b) => distance(
@@ -145,8 +179,9 @@ class AppController extends ChangeNotifier {
         remaining -= take;
       }
     }
-    if (remaining > 0)
+    if (remaining > 0) {
       throw StateError('المتاح أقل من الطلب بمقدار $remaining حصص');
+    }
     for (final e in proposal.entries) {
       cart[e.key] = (cart[e.key] ?? 0) + e.value;
     }
@@ -154,11 +189,13 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> locate() async {
-    if (!await Geolocator.isLocationServiceEnabled())
+    if (!await Geolocator.isLocationServiceEnabled()) {
       throw StateError('فعّل خدمة الموقع أو أدخل الحي يدوياً');
+    }
     var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied)
+    if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
+    }
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
       throw StateError('لم يتم السماح بالموقع. يمكنك اختيار الحي يدوياً.');
@@ -195,11 +232,21 @@ class AppController extends ChangeNotifier {
   ) async {
     if (cart.isEmpty) throw StateError('السلة فارغة');
     if (!signedIn) throw StateError('سجل الدخول لإرسال الطلب');
+    if (!['pickup', 'delivery'].contains(fulfillment) ||
+        customerName.trim().isEmpty ||
+        customerName.length > 100 ||
+        address.length > 1000) {
+      throw StateError('تحقق من اسم المستلم وطريقة الاستلام');
+    }
+    if (fulfillment == 'delivery' && address.trim().isEmpty) {
+      throw StateError('أدخل عنوان التوصيل');
+    }
     if (demo) {
       // Validate every line before mutating inventory.
       for (final e in cart.entries) {
-        if (e.value > meal(e.key).stock || !seller(meal(e.key).sellerId).open)
+        if (e.value > meal(e.key).stock || !seller(meal(e.key).sellerId).open) {
           throw StateError('تغير التوفر، راجع سلتك');
+        }
       }
       final groups = <String, List<Map<String, dynamic>>>{};
       for (final e in cart.entries) {
@@ -234,7 +281,13 @@ class AppController extends ChangeNotifier {
         'place_order',
         params: {
           'p_items': cart.entries
-              .map((e) => {'meal_id': e.key, 'quantity': e.value})
+              .map(
+                (e) => {
+                  'meal_id': e.key,
+                  'quantity': e.value,
+                  'price': meal(e.key).price,
+                },
+              )
               .toList(),
           'p_fulfillment': fulfillment,
           'p_address': address,
@@ -247,13 +300,18 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> advance(FoodOrder order) async {
-    if (!signedIn || order.sellerId != userId) throw StateError('هذا الطلب تابع لمطبخ آخر');
+    if (!signedIn || order.sellerId != userId) {
+      throw StateError('هذا الطلب تابع لمطبخ آخر');
+    }
     final i = orderStates.indexOf(order.status);
     if (i < 0 || i >= 3) return;
-    if (!demo)
+    if (!demo) {
       await client!.rpc('advance_order', params: {'p_order_id': order.id});
-    order.status = orderStates[i + 1];
-    notifyListeners();
+      await refresh();
+    } else {
+      order.status = orderStates[i + 1];
+      notifyListeners();
+    }
   }
 
   Future<void> saveMeal({
@@ -305,7 +363,11 @@ class AppController extends ChangeNotifier {
   Future<void> saveSeller(Map<String, dynamic> values) async {
     if (demo) {
       final i = sellers.indexWhere((s) => s.id == userId);
-      final s = Seller.fromJson({'id': userId, 'rating': 0, ...values});
+      final s = Seller.fromJson({
+        'id': userId,
+        'rating': i < 0 ? 0 : sellers[i].rating,
+        ...values,
+      });
       if (i < 0) {
         sellers.add(s);
       } else {

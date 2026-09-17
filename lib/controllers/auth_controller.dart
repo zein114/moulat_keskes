@@ -76,14 +76,15 @@ class AuthController {
       return switch (error.code) {
         'invalid_credentials' => 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
         'email_not_confirmed' => 'افتح رسالة التأكيد في بريدك ثم سجّل الدخول.',
-        'user_already_exists' || 'email_exists' =>
-          'يوجد حساب بهذا البريد. جرّب تسجيل الدخول.',
+        'user_already_exists' ||
+        'email_exists' => 'يوجد حساب بهذا البريد. جرّب تسجيل الدخول.',
         'weak_password' => 'اختر كلمة مرور أقوى، من ٨ أحرف على الأقل.',
         'over_email_send_rate_limit' || 'over_request_rate_limit' =>
           'طلبات كثيرة خلال وقت قصير. انتظر قليلاً ثم حاول مجدداً.',
         'same_password' => 'اختر كلمة مرور مختلفة عن كلمة المرور الحالية.',
-        'otp_expired' || 'session_expired' || 'session_not_found' =>
-          'انتهت صلاحية الرابط. اطلب رابط استعادة جديداً.',
+        'otp_expired' ||
+        'session_expired' ||
+        'session_not_found' => 'انتهت صلاحية الرابط. اطلب رابط استعادة جديداً.',
         _ => 'تعذر إتمام العملية. تحقق من البيانات والاتصال ثم حاول مجدداً.',
       };
     }

@@ -1,11 +1,11 @@
 {
-    "name": "moulat_keskes",
-    "short_name": "moulat_keskes",
+    "name": "مولات كسكس",
+    "short_name": "مولات كسكس",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F8F7EE",
+    "theme_color": "#075442",
+    "description": "Homemade Mauritanian food, made with love.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -16,9 +16,16 @@ class OrderController extends ChangeNotifier {
   String? error;
   bool _disposed = false;
   @override
-  void notifyListeners() { if (!_disposed) super.notifyListeners(); }
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
   @override
-  void dispose() { _disposed = true; super.dispose(); }
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
   Future<void> load() async {
     if (loading || _disposed) return;
     loading = true;
@@ -50,8 +57,9 @@ class OrderController extends ChangeNotifier {
 
   Future<void> send(String body) async {
     final trimmed = body.trim();
-    if (trimmed.isEmpty || trimmed.length > 1000)
+    if (trimmed.isEmpty || trimmed.length > 1000) {
       throw StateError('اكتب رسالة من 1 إلى 1000 حرف');
+    }
     if (app.demo) {
       _demoMessages.putIfAbsent(orderId, () => []).add({
         'sender_id': app.userId,
