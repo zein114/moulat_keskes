@@ -18,9 +18,13 @@ class _AppRootState extends State<AppRoot> {
   bool started = false;
   int tab = 0;
   Timer? timer;
+  bool recoveryNavigationPending = false;
+  late bool previousSellerMode;
   @override
   void initState() {
     super.initState();
+    previousSellerMode = widget.store.sellerMode;
+    widget.store.addListener(_onControllerChange);
     unawaited(widget.store.refresh());
     timer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (!widget.store.demo &&
@@ -31,9 +35,28 @@ class _AppRootState extends State<AppRoot> {
     });
   }
 
+  void _onControllerChange() {
+    if (widget.store.sellerMode != previousSellerMode) {
+      setState(() {
+        previousSellerMode = widget.store.sellerMode;
+        tab = 0;
+      });
+    }
+    if (widget.store.recovering && !recoveryNavigationPending) {
+      recoveryNavigationPending = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.store.recovering) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+        recoveryNavigationPending = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
     timer?.cancel();
+    widget.store.removeListener(_onControllerChange);
     super.dispose();
   }
 
@@ -300,16 +323,18 @@ class _DiscoverState extends State<Discover> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
+                          const FittedBox(fit: BoxFit.scaleDown, child: Text(
                             'طعم يجمعنا',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 30,
                               fontWeight: FontWeight.bold,
                             ),
-                          ),
+                          )),
                           const Text(
                             'وصفات أصيلة، من بيوت قريبة',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: Color(0xFFD5E4C8),
                               height: 1.8,
@@ -318,6 +343,8 @@ class _DiscoverState extends State<Discover> {
                           const SizedBox(height: 12),
                           const Text(
                             'طازج اليوم  ✦  محضّر بحب',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: Color(0xFFE9C78B),
                               fontSize: 13,
@@ -530,16 +557,20 @@ class SellerCard extends StatelessWidget {
               children: [
                 const Icon(Icons.schedule, size: 16, color: green),
                 const SizedBox(width: 6),
-                Text(
+                Expanded(child: Text(
                   seller.hours,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   textDirection: TextDirection.ltr,
                   style: const TextStyle(fontSize: 12, color: muted),
-                ),
-                const Spacer(),
-                const Text(
+                )),
+                const SizedBox(width: 8),
+                const Flexible(child: Text(
                   'اكتشف الوجبات',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: green, fontWeight: FontWeight.bold),
-                ),
+                )),
                 const Icon(Icons.chevron_left, color: green, size: 18),
               ],
             ),
