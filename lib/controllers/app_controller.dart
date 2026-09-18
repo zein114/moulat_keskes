@@ -3,6 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/models.dart';
+import '../services/auth_repository.dart';
+import '../services/order_repository.dart';
+import '../services/vendor_repository.dart';
 
 class AppController extends ChangeNotifier {
   AppController({this.client}) {
@@ -24,6 +27,18 @@ class AppController extends ChangeNotifier {
     });
   }
   final SupabaseClient? client;
+  late final ProfileRepository? profiles = client == null
+      ? null
+      : ProfileRepository(client!);
+  late final AuthRepository? authRepository = client == null
+      ? null
+      : AuthRepository(client!);
+  late final VendorRepository? vendors = client == null
+      ? null
+      : VendorRepository(client!);
+  late final OrderRepository? orderRepository = client == null
+      ? null
+      : OrderRepository(client!);
   StreamSubscription<AuthState>? _auth;
   bool get demo => client == null;
   bool get signedIn => demo || client!.auth.currentUser != null;
@@ -68,32 +83,21 @@ class AppController extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
-      final s = await client!.from('sellers').select().order('name');
-      final m = await client!.from('meals').select().order('name');
-      Map<String, dynamic>? profile;
+      final s = await vendors!.fetchSellers();
+      final m = await vendors!.fetchMeals();
+      UserProfile? profile;
       List<FoodOrder> nextOrders = [];
       if (refreshUser != null) {
-        final p = await client!
-            .from('profiles')
-            .select()
-            .eq('id', refreshUser)
-            .single();
-        profile = p;
-        nextOrders =
-            (await client!
-                    .from('orders')
-                    .select()
-                    .order('created_at', ascending: false))
-                .map(FoodOrder.fromJson)
-                .toList();
+        profile = await profiles!.currentProfile();
+        nextOrders = await orderRepository!.fetchOrders();
       }
       if (version != _refreshVersion ||
           _disposed ||
           client?.auth.currentUser?.id != refreshUser) {
         return;
       }
-      sellers = s.map(Seller.fromJson).toList();
-      meals = m.map(Meal.fromJson).toList();
+      sellers = s;
+      meals = m;
       final removedMeals = cart.keys
           .where((id) => !meals.any((meal) => meal.id == id))
           .toList();
@@ -105,8 +109,8 @@ class AppController extends ChangeNotifier {
             'بعض الوجبات لم تعد متاحة وتمت إزالتها. راجع السلة قبل التأكيد.';
       }
       if (profile != null) {
-        name = profile['name'];
-        role = profile['role'];
+        name = profile.name;
+        role = profile.role;
         orders = nextOrders;
       } else {
         orders = [];
@@ -277,22 +281,19 @@ class AppController extends ChangeNotifier {
         );
       }
     } else {
-      await client!.rpc(
-        'place_order',
-        params: {
-          'p_items': cart.entries
-              .map(
-                (e) => {
-                  'meal_id': e.key,
-                  'quantity': e.value,
-                  'price': meal(e.key).price,
-                },
-              )
-              .toList(),
-          'p_fulfillment': fulfillment,
-          'p_address': address,
-          'p_customer_name': customerName,
-        },
+      await orderRepository!.placeOrder(
+        items: cart.entries
+            .map(
+              (e) => {
+                'meal_id': e.key,
+                'quantity': e.value,
+                'price': meal(e.key).price,
+              },
+            )
+            .toList(),
+        fulfillment: fulfillment,
+        address: address,
+        customerName: customerName,
       );
     }
     cart.clear();
@@ -306,7 +307,7 @@ class AppController extends ChangeNotifier {
     final i = orderStates.indexOf(order.status);
     if (i < 0 || i >= 3) return;
     if (!demo) {
-      await client!.rpc('advance_order', params: {'p_order_id': order.id});
+      await orderRepository!.advanceOrder(order.id);
       await refresh();
     } else {
       order.status = orderStates[i + 1];
@@ -323,15 +324,14 @@ class AppController extends ChangeNotifier {
     required String description,
     required String imageUrl,
   }) async {
-    final values = {
-      'seller_id': userId,
-      'name': title,
-      'category': category,
-      'price': price,
-      'stock': stock,
-      'description': description,
-      'image_url': imageUrl,
-    };
+    final draft = MealDraft(
+      name: title,
+      category: category,
+      price: price,
+      stock: stock,
+      description: description,
+      imageUrl: imageUrl,
+    );
     if (demo) {
       final m = Meal(
         id: id ?? 'm${DateTime.now().microsecondsSinceEpoch}',
@@ -351,10 +351,9 @@ class AppController extends ChangeNotifier {
       notifyListeners();
     } else {
       if (id == null) {
-        await client!.from('meals').insert(values);
+        await vendors!.addMeal(userId, draft);
       } else {
-        values.remove('seller_id');
-        await client!.from('meals').update(values).eq('id', id);
+        await vendors!.editMeal(id, draft);
       }
       await refresh();
     }
@@ -375,17 +374,13 @@ class AppController extends ChangeNotifier {
       }
       notifyListeners();
     } else {
-      if (sellers.any((s) => s.id == userId)) {
-        await client!.from('sellers').update(values).eq('id', userId);
-      } else {
-        await client!.from('sellers').insert({'id': userId, ...values});
-      }
+      await vendors!.upsertSeller(values, userId);
       await refresh();
     }
   }
 
   Future<void> signOut() async {
-    if (!demo) await client!.auth.signOut();
+    if (!demo) await authRepository!.signOut();
     cart.clear();
     favorites.clear();
     sellerMode = false;

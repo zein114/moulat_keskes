@@ -1,27 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'controllers/app_controller.dart';
+import 'services/supabase_service.dart';
 import 'views/app.dart';
 import 'views/shared.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  const url = String.fromEnvironment('SUPABASE_URL');
-  const key = String.fromEnvironment('SUPABASE_ANON_KEY');
-  SupabaseClient? client;
   String? startupError;
-  if (url.isNotEmpty || key.isNotEmpty) {
-    try {
-      if (url.isEmpty || key.isEmpty) {
-        throw StateError('Missing Supabase configuration');
-      }
-      await Supabase.initialize(url: url, publishableKey: key);
-      client = Supabase.instance.client;
-    } catch (_) {
-      startupError =
-          'تعذر الاتصال. تحقق من SUPABASE_URL و SUPABASE_ANON_KEY ثم أعد تشغيل التطبيق.';
-    }
+  SupabaseClient? client;
+  try {
+    client = await SupabaseService.initializeFromEnvironment();
+  } catch (_) {
+    startupError =
+        'تعذر الاتصال. تحقق من SUPABASE_URL و SUPABASE_ANON_KEY ثم أعد تشغيل التطبيق.';
   }
   runApp(
     MainApp(

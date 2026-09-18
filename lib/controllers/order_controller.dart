@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'app_controller.dart';
+import '../services/order_repository.dart';
 
 /// Owns order communication and reviews; views never access Supabase directly.
 class OrderController extends ChangeNotifier {
@@ -9,6 +10,9 @@ class OrderController extends ChangeNotifier {
   }
   final AppController app;
   final String orderId;
+  late final OrderRepository? _orders = app.client == null
+      ? null
+      : OrderRepository(app.client!);
   static final Map<String, List<Map<String, dynamic>>> _demoMessages = {};
   static final Set<String> _demoReviews = {};
   List<Map<String, dynamic>> messages = [];
@@ -36,17 +40,8 @@ class OrderController extends ChangeNotifier {
         messages = List.of(_demoMessages[orderId] ?? []);
         reviewed = _demoReviews.contains(orderId);
       } else {
-        messages = await app.client!
-            .from('messages')
-            .select()
-            .eq('order_id', orderId)
-            .order('created_at');
-        reviewed =
-            (await app.client!
-                    .from('reviews')
-                    .select('id')
-                    .eq('order_id', orderId))
-                .isNotEmpty;
+        messages = await _orders!.fetchMessages(orderId);
+        reviewed = await _orders!.hasReview(orderId);
       }
     } catch (_) {
       error = 'تعذر تحميل المحادثة';
@@ -67,11 +62,11 @@ class OrderController extends ChangeNotifier {
         'created_at': DateTime.now().toIso8601String(),
       });
     } else {
-      await app.client!.from('messages').insert({
-        'order_id': orderId,
-        'sender_id': app.userId,
-        'body': trimmed,
-      });
+      await _orders!.sendMessage(
+        orderId: orderId,
+        senderId: app.userId,
+        body: trimmed,
+      );
     }
     await load();
   }
@@ -81,13 +76,13 @@ class OrderController extends ChangeNotifier {
     if (app.demo) {
       _demoReviews.add(orderId);
     } else {
-      await app.client!.from('reviews').insert({
-        'order_id': orderId,
-        'customer_id': app.userId,
-        'seller_id': sellerId,
-        'rating': rating,
-        'comment': comment.trim(),
-      });
+      await _orders!.createReview(
+        orderId: orderId,
+        customerId: app.userId,
+        sellerId: sellerId,
+        rating: rating,
+        comment: comment,
+      );
     }
     reviewed = true;
     notifyListeners();
