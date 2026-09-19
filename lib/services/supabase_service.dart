@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
@@ -18,8 +19,9 @@ class SupabaseService {
   }
 
   static Future<SupabaseClient?> initializeFromEnvironment() async {
-    const url = String.fromEnvironment('SUPABASE_URL');
-    const key = String.fromEnvironment('SUPABASE_ANON_KEY');
+    await _loadDotEnv();
+    final url = _setting('SUPABASE_URL');
+    final key = _setting('SUPABASE_ANON_KEY');
     if (url.isEmpty && key.isEmpty) return null;
     if (url.isEmpty || key.isEmpty) {
       throw StateError('Missing Supabase configuration');
@@ -27,6 +29,28 @@ class SupabaseService {
     await Supabase.initialize(url: url, publishableKey: key);
     _client = Supabase.instance.client;
     return _client;
+  }
+
+  static String setting(String name) => _setting(name);
+
+  static Future<void> _loadDotEnv() async {
+    if (dotenv.isInitialized) return;
+    try {
+      await dotenv.load(fileName: '.env');
+    } catch (_) {
+      // A missing .env is allowed; --dart-define can still configure the app.
+    }
+  }
+
+  static String _setting(String name) {
+    final defined = switch (name) {
+      'SUPABASE_URL' => const String.fromEnvironment('SUPABASE_URL'),
+      'SUPABASE_ANON_KEY' => const String.fromEnvironment('SUPABASE_ANON_KEY'),
+      'AUTH_REDIRECT_URL' => const String.fromEnvironment('AUTH_REDIRECT_URL'),
+      _ => '',
+    };
+    if (defined.isNotEmpty) return defined;
+    return dotenv.maybeGet(name) ?? '';
   }
 }
 

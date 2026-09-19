@@ -25,7 +25,7 @@ class AuthRepository {
   String get email => client.auth.currentUser?.email ?? '';
 
   String get redirectUrl {
-    const configured = String.fromEnvironment('AUTH_REDIRECT_URL');
+    final configured = SupabaseService.setting('AUTH_REDIRECT_URL');
     if (configured.isNotEmpty) return configured;
     if (!kIsWeb) return 'moulatkeskes://auth-callback/';
     return Uri(

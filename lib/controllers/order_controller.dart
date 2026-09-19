@@ -40,8 +40,9 @@ class OrderController extends ChangeNotifier {
         messages = List.of(_demoMessages[orderId] ?? []);
         reviewed = _demoReviews.contains(orderId);
       } else {
-        messages = await _orders!.fetchMessages(orderId);
-        reviewed = await _orders!.hasReview(orderId);
+        final orders = _orders!;
+        messages = await orders.fetchMessages(orderId);
+        reviewed = await orders.hasReview(orderId);
       }
     } catch (_) {
       error = 'تعذر تحميل المحادثة';
