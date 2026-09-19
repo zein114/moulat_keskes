@@ -108,13 +108,19 @@ class _AppRootState extends State<AppRoot> {
           leadingWidth: 74,
           leading: Padding(
             padding: const EdgeInsets.all(12),
-            child: IconButton.filledTonal(
-              tooltip: 'تغيير الموقع',
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => LocationPage(store: s)),
+            child: Center(
+              child: SizedBox.square(
+                dimension: 48,
+                child: IconButton.filledTonal(
+                  style: IconButton.styleFrom(shape: const CircleBorder()),
+                  tooltip: 'تغيير الموقع',
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => LocationPage(store: s)),
+                  ),
+                  icon: const Icon(Icons.location_on_outlined),
+                ),
               ),
-              icon: const Icon(Icons.location_on_outlined),
             ),
           ),
           actions: [
@@ -124,13 +130,17 @@ class _AppRootState extends State<AppRoot> {
                 child: Badge(
                   isLabelVisible: s.cartCount > 0,
                   label: Text('${s.cartCount}'),
-                  child: IconButton.filledTonal(
-                    tooltip: 'السلة',
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => CartPage(store: s)),
+                  child: SizedBox.square(
+                    dimension: 48,
+                    child: IconButton.filledTonal(
+                      style: IconButton.styleFrom(shape: const CircleBorder()),
+                      tooltip: 'السلة',
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => CartPage(store: s)),
+                      ),
+                      icon: const Icon(Icons.shopping_bag_outlined),
                     ),
-                    icon: const Icon(Icons.shopping_bag_outlined),
                   ),
                 ),
               ),
@@ -323,14 +333,17 @@ class _DiscoverState extends State<Discover> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const FittedBox(fit: BoxFit.scaleDown, child: Text(
-                            'طعم يجمعنا',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 30,
-                              fontWeight: FontWeight.bold,
+                          const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'طعم يجمعنا',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          )),
+                          ),
                           const Text(
                             'وصفات أصيلة، من بيوت قريبة',
                             maxLines: 2,
@@ -557,20 +570,24 @@ class SellerCard extends StatelessWidget {
               children: [
                 const Icon(Icons.schedule, size: 16, color: green),
                 const SizedBox(width: 6),
-                Expanded(child: Text(
-                  seller.hours,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textDirection: TextDirection.ltr,
-                  style: const TextStyle(fontSize: 12, color: muted),
-                )),
+                Expanded(
+                  child: Text(
+                    seller.hours,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textDirection: TextDirection.ltr,
+                    style: const TextStyle(fontSize: 12, color: muted),
+                  ),
+                ),
                 const SizedBox(width: 8),
-                const Flexible(child: Text(
-                  'اكتشف الوجبات',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: green, fontWeight: FontWeight.bold),
-                )),
+                const Flexible(
+                  child: Text(
+                    'اكتشف الوجبات',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: green, fontWeight: FontWeight.bold),
+                  ),
+                ),
                 const Icon(Icons.chevron_left, color: green, size: 18),
               ],
             ),

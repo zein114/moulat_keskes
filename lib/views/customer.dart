@@ -29,15 +29,66 @@ class LocationPage extends StatefulWidget {
 
 class _LocationPageState extends State<LocationPage> {
   bool busy = false;
+  final MapController _mapController = MapController();
+  bool _mapReady = false;
+  String? _selectedSellerId;
+  Set<String> _mappedSellerLocations = {};
+
+  void _focus(LatLng point) {
+    if (_mapReady) _mapController.move(point, 14);
+  }
+
+  void _showAll(List<Seller> sellers) {
+    if (!_mapReady || sellers.isEmpty) return;
+    if (sellers.length == 1) {
+      _focus(LatLng(sellers.first.lat, sellers.first.lng));
+      return;
+    }
+    _mapController.fitCamera(
+      CameraFit.coordinates(
+        coordinates: [
+          for (final seller in sellers) LatLng(seller.lat, seller.lng),
+        ],
+        padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 80),
+        maxZoom: 14,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: widget.store,
     builder: (context, _) {
       final s = widget.store;
-      final target = widget.seller;
+      final target = s.demo ? null : widget.seller;
+      final sellers = <Seller>[if (!s.demo) ...s.sellers]
+        ..sort((a, b) => s.distance(a).compareTo(s.distance(b)));
+      final nearest = sellers.isEmpty ? null : sellers.first;
+      final sellerLocations = sellers
+          .map((seller) => '${seller.id}:${seller.lat}:${seller.lng}')
+          .toSet();
+      if (_mapReady &&
+          target == null &&
+          (sellerLocations.length != _mappedSellerLocations.length ||
+              !sellerLocations.containsAll(_mappedSellerLocations))) {
+        _mappedSellerLocations = sellerLocations;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showAll(sellers);
+        });
+      }
+      final selected = sellers.where(
+        (seller) => seller.id == _selectedSellerId,
+      );
+      final activeSeller = selected.isNotEmpty ? selected.first : target;
       final point = LatLng(
-        target?.lat ?? s.latitude,
-        target?.lng ?? s.longitude,
+        target?.lat ?? nearest?.lat ?? s.latitude,
+        target?.lng ?? nearest?.lng ?? s.longitude,
       );
       return PageFrame(
         title: target == null ? 'حدد موقعك' : 'موقع المطبخ',
@@ -48,13 +99,41 @@ class _LocationPageState extends State<LocationPage> {
               target?.name ?? 'لقمة قريبة من بيتك',
               subtitle: target?.area ?? 'اختر الحي أو استخدم موقعك الحالي',
             ),
+            if (s.demo)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: Text(
+                  'الخريطة تعرض المطابخ المسجلة في قاعدة البيانات فقط. شغّل النسخة المتصلة لرؤيتها.',
+                  style: TextStyle(color: muted),
+                ),
+              ),
             ClipRRect(
               borderRadius: BorderRadius.circular(24),
               child: SizedBox(
                 height: 330,
                 child: FlutterMap(
-                  key: ValueKey('${point.latitude}:${point.longitude}'),
-                  options: MapOptions(initialCenter: point, initialZoom: 14),
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: point,
+                    initialZoom: 14,
+                    initialCameraFit: target == null && sellers.length > 1
+                        ? CameraFit.coordinates(
+                            coordinates: [
+                              for (final seller in sellers)
+                                LatLng(seller.lat, seller.lng),
+                            ],
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 80,
+                              vertical: 80,
+                            ),
+                            maxZoom: 14,
+                          )
+                        : null,
+                    onMapReady: () {
+                      _mapReady = true;
+                      _mappedSellerLocations = sellerLocations;
+                    },
+                  ),
                   children: [
                     TileLayer(
                       urlTemplate: const String.fromEnvironment(
@@ -66,14 +145,96 @@ class _LocationPageState extends State<LocationPage> {
                     ),
                     MarkerLayer(
                       markers: [
+                        for (final seller in sellers)
+                          Marker(
+                            point: LatLng(seller.lat, seller.lng),
+                            width: 150,
+                            height: 78,
+                            alignment: Alignment.bottomCenter,
+                            child: Tooltip(
+                              message: seller.name,
+                              child: Semantics(
+                                button: true,
+                                label: '${seller.name}، ${seller.area}',
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(
+                                      () => _selectedSellerId = seller.id,
+                                    );
+                                    _focus(LatLng(seller.lat, seller.lng));
+                                  },
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 150,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(color: green),
+                                        ),
+                                        child: Text(
+                                          seller.name,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: green,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.location_pin,
+                                        size: 46,
+                                        color: seller.id == activeSeller?.id
+                                            ? gold
+                                            : green,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                         Marker(
-                          point: point,
-                          width: 60,
-                          height: 60,
-                          child: const Icon(
-                            Icons.location_pin,
-                            size: 55,
-                            color: green,
+                          point: LatLng(s.latitude, s.longitude),
+                          width: 150,
+                          height: 68,
+                          alignment: Alignment.topCenter,
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.my_location,
+                                size: 32,
+                                color: Colors.blue,
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade700,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  s.hasLocation ? 'موقعك الحالي' : 'مركز الحي',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -95,6 +256,37 @@ class _LocationPageState extends State<LocationPage> {
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+            if (sellers.isNotEmpty)
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        final closest = sellers.first;
+                        setState(() => _selectedSellerId = closest.id);
+                        _focus(LatLng(closest.lat, closest.lng));
+                      },
+                      icon: const Icon(Icons.near_me_outlined),
+                      label: const Text('الأقرب إليك'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showAll(sellers),
+                      icon: const Icon(Icons.map_outlined),
+                      label: const Text('عرض الكل'),
+                    ),
+                  ),
+                ],
+              ),
+            if (!s.demo)
+              TextButton.icon(
+                onPressed: s.loading ? null : s.refresh,
+                icon: const Icon(Icons.refresh),
+                label: const Text('تحديث مواقع المطابخ'),
+              ),
             const SizedBox(height: 20),
             if (target == null) ...[
               DropdownButtonFormField<String>(
@@ -104,7 +296,10 @@ class _LocationPageState extends State<LocationPage> {
                     .map((v) => DropdownMenuItem(value: v, child: Text(v)))
                     .toList(),
                 onChanged: (v) {
-                  if (v != null) s.selectArea(v);
+                  if (v != null) {
+                    s.selectArea(v);
+                    _focus(LatLng(s.latitude, s.longitude));
+                  }
                 },
               ),
               const SizedBox(height: 12),
@@ -115,6 +310,7 @@ class _LocationPageState extends State<LocationPage> {
                         setState(() => busy = true);
                         try {
                           await s.locate();
+                          _focus(LatLng(s.latitude, s.longitude));
                         } catch (e) {
                           if (context.mounted) toast(context, friendlyError(e));
                         }
@@ -135,6 +331,45 @@ class _LocationPageState extends State<LocationPage> {
                 onPressed: () => Navigator.pop(context),
                 child: const Text('تأكيد الموقع'),
               ),
+              Heading(
+                'كل المطابخ على الخريطة',
+                subtitle:
+                    '${sellers.length} مطابخ مرتبة حسب المسافة، بما فيها البعيدة',
+              ),
+              if (sellers.isEmpty && !s.loading)
+                EmptyState(
+                  s.demo
+                      ? 'النسخة التجريبية لا تعرض مواقع المطابخ'
+                      : 'لا توجد مطابخ حالياً',
+                  s.demo
+                      ? 'شغّل التطبيق باتصال Supabase لعرض المطابخ الحقيقية.'
+                      : 'ستظهر مواقع المطابخ هنا عند إضافتها.',
+                ),
+              for (final seller in sellers)
+                ListTile(
+                  leading: Icon(
+                    Icons.location_pin,
+                    color: seller.id == activeSeller?.id ? gold : green,
+                  ),
+                  title: Text(seller.name),
+                  subtitle: Text(seller.area),
+                  trailing: Text('${s.distance(seller).toStringAsFixed(1)} كم'),
+                  onTap: () {
+                    setState(() => _selectedSellerId = seller.id);
+                    _focus(LatLng(seller.lat, seller.lng));
+                  },
+                ),
+              if (activeSeller != null)
+                OutlinedButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          SellerPage(store: s, sellerId: activeSeller.id),
+                    ),
+                  ),
+                  child: Text('عرض مطبخ ${activeSeller.name}'),
+                ),
             ] else ...[
               Panel(
                 child: Row(

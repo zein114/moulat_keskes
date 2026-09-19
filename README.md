@@ -13,6 +13,22 @@ flutter run -d chrome
 
 Without Supabase configuration, the app runs in an explicitly labeled in-memory demo. Orders, inventory edits, favorites, and messages reset when the app restarts. No real orders or payments are sent. Use **حسابي → فتح لوحة البائعة** to switch to the demo seller. Create an order from أم خديجة first, then advance it in seller mode.
 
+The app does not read `.env` automatically. On macOS/Linux, if `.env` contains `SUPABASE_URL` and `SUPABASE_ANON_KEY`, start the connected app with:
+
+```bash
+bash tool/run_live.sh -d chrome --web-port 8080
+```
+
+For an attached Android or iOS phone, find its ID with `flutter devices`, then run directly on the phone:
+
+```bash
+bash tool/run_live.sh --mobile -d YOUR_DEVICE_ID
+```
+
+The `--mobile` option lets the app use its registered `moulatkeskes://auth-callback/` redirect for sign-in links. Running Chrome first is not required.
+
+The map shows only Supabase merchants. In demo mode it shows no merchant pins and explains that a live connection is needed. Restart the app after switching modes.
+
 For a connected backend, follow [database and authentication setup](docs/SUPABASE_SETUP.md). The guide includes SQL migration, RLS, account roles, confirmation emails, password recovery, redirect URLs, configuration, and verification steps.
 
 ```powershell
