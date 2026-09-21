@@ -36,7 +36,13 @@ class Brand extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Icon(Icons.soup_kitchen_rounded, size: large ? 78 : 34, color: green),
+      Image.asset(
+        'assets/images/logo.png',
+        width: large ? 140 : 40,
+        height: large ? 140 : 40,
+        fit: BoxFit.contain,
+        excludeFromSemantics: true,
+      ),
       Text(
         'مولات كسكس',
         style: TextStyle(
