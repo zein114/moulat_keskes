@@ -199,81 +199,38 @@ class Welcome extends StatelessWidget {
   final bool demo;
   @override
   Widget build(BuildContext context) => Scaffold(
-    body: SafeArea(
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 950),
-            child: LayoutBuilder(
-              builder: (context, c) {
-                final intro = Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Pill('من مطابخ نواكشوط، بكل حب'),
-                    const SizedBox(height: 28),
-                    const Brand(large: true),
-                    const SizedBox(height: 14),
-                    const Text(
-                      'أكل تقليدي.. من قلب بيتنا',
-                      style: TextStyle(
-                        color: green,
-                        fontSize: 23,
-                        fontWeight: FontWeight.bold,
-                      ),
+    body: Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.asset(
+          'assets/images/landing_background.png',
+          fit: BoxFit.cover,
+          alignment: Alignment.bottomCenter,
+          excludeFromSemantics: true,
+        ),
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                const Brand(large: true),
+                const Spacer(),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: onStart,
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('اكتشف المطابخ'),
                     ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      'اكتشف طعم الدار، واطلب وجبتك المفضلة\nمن أقرب مطبخ إليك.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: muted, fontSize: 17, height: 1.8),
-                    ),
-                    const SizedBox(height: 30),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: onStart,
-                        icon: const Icon(Icons.arrow_back),
-                        label: const Text('اكتشف المطابخ'),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    const Text(
-                      'صنع بأيدٍ محلية  •  طازج كل يوم',
-                      style: TextStyle(color: muted),
-                    ),
-                    if (demo)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 12),
-                        child: Pill('تجربة التطبيق بدون حساب'),
-                      ),
-                  ],
-                );
-                final photo = ClipRRect(
-                  borderRadius: BorderRadius.circular(120),
-                  child: Image.asset(
-                    'assets/images/couscous.png',
-                    height: c.maxWidth > 700 ? 500 : 230,
-                    fit: BoxFit.cover,
                   ),
-                );
-                if (c.maxWidth > 700) {
-                  return Row(
-                    children: [
-                      Expanded(child: intro),
-                      const SizedBox(width: 50),
-                      Expanded(child: photo),
-                    ],
-                  );
-                }
-                return Column(
-                  children: [photo, const SizedBox(height: 26), intro],
-                );
-              },
+                ),
+              ],
             ),
           ),
         ),
-      ),
+      ],
     ),
   );
 }
