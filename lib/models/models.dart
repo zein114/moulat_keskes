@@ -112,7 +112,7 @@ const demoSellers = [
     name: 'أم خديجة',
     area: 'تفرغ زينة',
     phone: '',
-    bio: 'من مطبخي إلى مائدتكم، وصفات موريتانية أصيلة أحضّرها كل يوم بكل حب.',
+    bio: 'أقدّم وجبات موريتانية.',
     rating: 4.9,
   ),
   Seller(
@@ -122,7 +122,7 @@ const demoSellers = [
     lat: 18.098,
     lng: -15.974,
     rating: 4.8,
-    bio: 'أكل الدار بطعم زمان. وجبات طازجة ومكونات مختارة بعناية.',
+    bio: 'أقدّم وجبات منزلية.',
   ),
   Seller(
     id: 'fatima',
@@ -131,7 +131,7 @@ const demoSellers = [
     lat: 18.113,
     lng: -15.946,
     rating: 4.7,
-    bio: 'أهلاً بكم في مطبخي، لقمة هنية لكل العائلة.',
+    bio: 'أقدّم وجبات للأفراد والعائلات.',
   ),
 ];
 const demoMeals = [
@@ -160,7 +160,7 @@ const demoMeals = [
     category: 'الكسكس',
     price: 230,
     stock: 7,
-    description: 'حصة سخية، محضرة يومياً.',
+    description: 'حصة من كسكس الدار.',
   ),
   Meal(
     id: 'm4',

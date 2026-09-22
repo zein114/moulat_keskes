@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>نستخدم موقعك لعرض المطابخ القريبة منك.</string>
+	<string>نستخدم موقعك لعرض البائعات القريبات منك.</string>
 	<key>CFBundleURLTypes</key>
 	<array><dict><key>CFBundleURLSchemes</key><array><string>moulatkeskes</string></array></dict></array>
 	<key>CFBundleDevelopmentRegion</key>

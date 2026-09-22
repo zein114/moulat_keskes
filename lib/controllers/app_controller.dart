@@ -142,7 +142,7 @@ class AppController extends ChangeNotifier {
       throw StateError('لا يمكنك طلب وجبتك الخاصة');
     }
     if (count > 0 && !seller(m.sellerId).open) {
-      throw StateError('المطبخ مغلق الآن');
+      throw StateError('البائعة غير متاحة للطلبات الآن');
     }
     final next = (cart[m.id] ?? 0) + count;
     if (count > 0 && next > m.stock) {
@@ -152,42 +152,6 @@ class AppController extends ChangeNotifier {
       cart.remove(m.id);
     } else {
       cart[m.id] = next;
-    }
-    notifyListeners();
-  }
-
-  /// Plans a family order across open sellers. No cart mutation on insufficient stock.
-  void familyOrder(String category, int quantity) {
-    if (quantity <= 0) throw StateError('أدخل كمية صحيحة');
-    final candidates =
-        meals
-            .where(
-              (m) =>
-                  m.category == category &&
-                  seller(m.sellerId).open &&
-                  (demo || !signedIn || m.sellerId != userId),
-            )
-            .toList()
-          ..sort(
-            (a, b) => distance(
-              seller(a.sellerId),
-            ).compareTo(distance(seller(b.sellerId))),
-          );
-    var remaining = quantity;
-    final proposal = <String, int>{};
-    for (final m in candidates) {
-      final available = m.stock - (cart[m.id] ?? 0);
-      final take = remaining < available ? remaining : available;
-      if (take > 0) {
-        proposal[m.id] = take;
-        remaining -= take;
-      }
-    }
-    if (remaining > 0) {
-      throw StateError('المتاح أقل من الطلب بمقدار $remaining حصص');
-    }
-    for (final e in proposal.entries) {
-      cart[e.key] = (cart[e.key] ?? 0) + e.value;
     }
     notifyListeners();
   }
@@ -302,7 +266,7 @@ class AppController extends ChangeNotifier {
 
   Future<void> advance(FoodOrder order) async {
     if (!signedIn || order.sellerId != userId) {
-      throw StateError('هذا الطلب تابع لمطبخ آخر');
+      throw StateError('هذا الطلب تابع لبائعة أخرى');
     }
     final i = orderStates.indexOf(order.status);
     if (i < 0 || i >= 3) return;

@@ -91,19 +91,19 @@ class _LocationPageState extends State<LocationPage> {
         target?.lng ?? nearest?.lng ?? s.longitude,
       );
       return PageFrame(
-        title: target == null ? 'حدد موقعك' : 'موقع المطبخ',
+        title: target == null ? 'حدد موقعك' : 'موقع البائعة',
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
             Heading(
-              target?.name ?? 'لقمة قريبة من بيتك',
+              target?.name ?? 'مواقع البائعات',
               subtitle: target?.area ?? 'اختر الحي أو استخدم موقعك الحالي',
             ),
             if (s.demo)
               const Padding(
                 padding: EdgeInsets.only(bottom: 12),
                 child: Text(
-                  'الخريطة تعرض المطابخ المسجلة في قاعدة البيانات فقط. شغّل النسخة المتصلة لرؤيتها.',
+                  'الخريطة تعرض البائعات المسجلات في قاعدة البيانات فقط. شغّل النسخة المتصلة لرؤيتها.',
                   style: TextStyle(color: muted),
                 ),
               ),
@@ -285,7 +285,7 @@ class _LocationPageState extends State<LocationPage> {
               TextButton.icon(
                 onPressed: s.loading ? null : s.refresh,
                 icon: const Icon(Icons.refresh),
-                label: const Text('تحديث مواقع المطابخ'),
+                label: const Text('تحديث مواقع البائعات'),
               ),
             const SizedBox(height: 20),
             if (target == null) ...[
@@ -332,18 +332,17 @@ class _LocationPageState extends State<LocationPage> {
                 child: const Text('تأكيد الموقع'),
               ),
               Heading(
-                'كل المطابخ على الخريطة',
-                subtitle:
-                    '${sellers.length} مطابخ مرتبة حسب المسافة، بما فيها البعيدة',
+                'كل البائعات على الخريطة',
+                subtitle: 'عدد البائعات: ${sellers.length} • حسب المسافة',
               ),
               if (sellers.isEmpty && !s.loading)
                 EmptyState(
                   s.demo
-                      ? 'النسخة التجريبية لا تعرض مواقع المطابخ'
-                      : 'لا توجد مطابخ حالياً',
+                      ? 'النسخة التجريبية لا تعرض مواقع البائعات'
+                      : 'لا توجد بائعات حالياً',
                   s.demo
-                      ? 'شغّل التطبيق باتصال Supabase لعرض المطابخ الحقيقية.'
-                      : 'ستظهر مواقع المطابخ هنا عند إضافتها.',
+                      ? 'شغّل التطبيق باتصال Supabase لعرض البائعات المسجلات.'
+                      : 'ستظهر مواقع البائعات هنا عند إضافتها.',
                 ),
               for (final seller in sellers)
                 ListTile(
@@ -368,7 +367,7 @@ class _LocationPageState extends State<LocationPage> {
                           SellerPage(store: s, sellerId: activeSeller.id),
                     ),
                   ),
-                  child: Text('عرض مطبخ ${activeSeller.name}'),
+                  child: Text('عرض صفحة البائعة ${activeSeller.name}'),
                 ),
             ] else ...[
               Panel(
@@ -417,10 +416,10 @@ class SellerPage extends StatelessWidget {
       final availableSellers = store.sellers.where((s) => s.id == sellerId);
       if (availableSellers.isEmpty) {
         return const PageFrame(
-          title: 'المطبخ',
+          title: 'البائعة',
           child: EmptyState(
-            'المطبخ غير متاح',
-            'ارجع لقائمة المطابخ لاختيار وجبة أخرى.',
+            'البائعة غير متاحة',
+            'ارجع لقائمة البائعات لاختيار وجبة أخرى.',
           ),
         );
       }
@@ -463,7 +462,7 @@ class SellerPage extends StatelessWidget {
                     ],
                   ),
                 ),
-                Pill(seller.open ? 'متاح الآن' : 'مغلق'),
+                Pill(seller.open ? 'متاحة الآن' : 'غير متاحة'),
               ],
             ),
             const SizedBox(height: 18),
@@ -474,13 +473,13 @@ class SellerPage extends StatelessWidget {
               runSpacing: 8,
               children: [
                 Pill(
-                  '★ ${seller.rating == 0 ? 'مطبخ جديد' : seller.rating.toStringAsFixed(1)}',
+                  '★ ${seller.rating == 0 ? 'بائعة جديدة' : seller.rating.toStringAsFixed(1)}',
                   color: gold,
                 ),
                 Pill(seller.hours),
                 ActionChip(
                   avatar: const Icon(Icons.location_on_outlined, size: 17),
-                  label: const Text('موقع المطبخ'),
+                  label: const Text('موقع البائعة'),
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -492,13 +491,13 @@ class SellerPage extends StatelessWidget {
               ],
             ),
             const Heading(
-              'من مطبخنا اليوم',
-              subtitle: 'وجبات طازجة، والكمية محدودة',
+              'وجبات البائعة',
+              subtitle: 'الوجبات والكميات المتاحة',
             ),
             if (meals.isEmpty)
               const EmptyState(
                 'القائمة قيد التحضير',
-                'ستظهر الوجبات هنا عندما يضيفها المطبخ.',
+                'ستظهر الوجبات هنا عندما تضيفها البائعة.',
               ),
             for (final meal in meals)
               Column(
@@ -528,13 +527,13 @@ class SellerPage extends StatelessWidget {
             const SizedBox(height: 10),
             OutlinedButton.icon(
               onPressed: seller.phone.isEmpty
-                  ? () => toast(context, 'يمكنك مراسلة المطبخ بعد إرسال الطلب')
+                  ? () => toast(context, 'يمكنك مراسلة البائعة بعد إرسال الطلب')
                   : () => openExternal(
                       context,
                       Uri(scheme: 'tel', path: seller.phone),
                     ),
               icon: const Icon(Icons.call_outlined),
-              label: const Text('تواصل مع المطبخ'),
+              label: const Text('تواصل مع البائعة'),
             ),
           ],
         ),
@@ -602,7 +601,7 @@ class _CartPageState extends State<CartPage> {
     builder: (context, _) {
       final s = widget.store;
       return PageFrame(
-        title: 'سلة الخير',
+        title: 'السلة',
         bottom: s.cart.isEmpty
             ? null
             : FilledButton(
@@ -615,8 +614,8 @@ class _CartPageState extends State<CartPage> {
               ),
         child: s.cart.isEmpty
             ? const EmptyState(
-                'سلتك بانتظار لقمة هنية',
-                'اكتشف المطابخ وأضف وجبتك المفضلة.',
+                'سلتك فارغة',
+                'اكتشف البائعات وأضف وجبتك المفضلة.',
                 icon: Icons.shopping_bag_outlined,
               )
             : Form(
@@ -626,7 +625,7 @@ class _CartPageState extends State<CartPage> {
                   children: [
                     Heading(
                       'وجباتك المختارة',
-                      subtitle: 'كل حصة تحكي حكاية بيت',
+                      subtitle: 'راجع الوجبات والكميات قبل التأكيد',
                       trailing: IconButton(
                         tooltip: 'تحديث الأسعار والتوفر',
                         onPressed: s.loading ? null : s.refresh,
@@ -696,7 +695,7 @@ class _CartPageState extends State<CartPage> {
                       segments: const [
                         ButtonSegment(
                           value: false,
-                          label: Text('استلام من المطبخ'),
+                          label: Text('استلام من البائعة'),
                           icon: Icon(Icons.storefront),
                         ),
                         ButtonSegment(
@@ -759,16 +758,6 @@ class _CartPageState extends State<CartPage> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    const Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        Pill('بنكيلي • قريباً', color: muted),
-                        Pill('سداد • قريباً', color: muted),
-                        Pill('مصرفي • قريباً', color: muted),
-                      ],
-                    ),
                     const SizedBox(height: 24),
                     Panel(
                       child: Column(
@@ -789,7 +778,7 @@ class _CartPageState extends State<CartPage> {
                           ),
                           const Divider(height: 28),
                           const Text(
-                            'سيصل طلب منفصل لكل مطبخ. تُحجز الكمية عند التأكيد، ولا يتم خصم أي مبلغ إلكترونياً.',
+                            'سيصل طلب منفصل لكل بائعة. تُحجز الكمية عند التأكيد، ولا يتم خصم أي مبلغ إلكترونياً.',
                             style: TextStyle(color: muted, height: 1.7),
                           ),
                         ],
@@ -841,7 +830,7 @@ class SuccessPage extends StatelessWidget {
             Text(
               store.demo
                   ? 'هذه تجربة توضيحية. يمكنك متابعة الطلب\nوتجربة التحضير من لوحة البائعة.'
-                  : 'سيتابع المطبخ طلبك قريباً.\nبالهنا والشفا!',
+                  : 'يمكنك متابعة حالة طلبك من صفحة الطلبات.',
               textAlign: TextAlign.center,
               style: const TextStyle(color: muted, fontSize: 18, height: 1.8),
             ),
@@ -881,7 +870,7 @@ class OrdersView extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [
           Heading(
-            store.sellerMode ? 'طلبات المطبخ' : 'طلباتك، بكل حب',
+            store.sellerMode ? 'طلبات البائعة' : 'طلباتك',
             subtitle: 'تابع رحلتها من التحضير إلى الاستلام',
           ),
           if (store.visibleOrders.isEmpty)
@@ -1064,7 +1053,7 @@ class _OrderPageState extends State<OrderPage> {
                   Text('المستلم: ${order.customerName}'),
                   Text(
                     order.fulfillment == 'pickup'
-                        ? 'استلام من المطبخ'
+                        ? 'استلام من البائعة'
                         : 'طلب توصيل: ${order.address}',
                   ),
                 ],

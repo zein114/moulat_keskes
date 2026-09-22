@@ -110,7 +110,7 @@ class _AuthPageState extends State<AuthPage> {
         : _reset
         ? 'استعادة كلمة المرور'
         : _signup
-        ? 'أهلاً بك على سفرتنا'
+        ? 'إنشاء حساب'
         : 'أهلاً بعودتك';
     return PageFrame(
       title: widget.recovery ? 'استعادة الحساب' : 'حساب مولات كسكس',
@@ -150,7 +150,7 @@ class _AuthPageState extends State<AuthPage> {
                                     ? 'اختر كلمة مرور جديدة وآمنة لحسابك.'
                                     : _reset
                                     ? 'أدخل بريدك لنرسل رابط الاستعادة.'
-                                    : 'لقمة هنية، وحكاية تبدأ من هنا.',
+                                    : 'أدخل بيانات حسابك للمتابعة.',
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(color: muted),
                               ),

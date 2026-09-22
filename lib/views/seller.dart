@@ -63,7 +63,9 @@ class _SellerDashboardState extends State<SellerDashboard> {
       if (mounted) {
         toast(
           context,
-          open ? 'مطبخك متاح للطلبات.' : 'تم إغلاق المطبخ مؤقتاً.',
+          open
+              ? 'أنتِ متاحة لاستقبال الطلبات.'
+              : 'تم إيقاف استقبال الطلبات مؤقتاً.',
         );
       }
     } catch (error) {
@@ -107,7 +109,7 @@ class _SellerDashboardState extends State<SellerDashboard> {
         children: [
           Heading(
             'مرحباً، ${seller.name}',
-            subtitle: 'من مطبخك تبدأ الحكاية. هذا يومك في لمحة.',
+            subtitle: 'ملخص الطلبات والوجبات',
             trailing: Avatar(seller.name),
           ),
           Panel(
@@ -124,7 +126,9 @@ class _SellerDashboardState extends State<SellerDashboard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        seller.open ? 'مطبخك مفتوح' : 'المطبخ مغلق حالياً',
+                        seller.open
+                            ? 'أنتِ متاحة للطلبات'
+                            : 'استقبال الطلبات متوقف حالياً',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -134,7 +138,7 @@ class _SellerDashboardState extends State<SellerDashboard> {
                       const SizedBox(height: 4),
                       Text(
                         seller.open
-                            ? 'جاهز لاستقبال طلبات جديدة'
+                            ? 'جاهزة لاستقبال طلبات جديدة'
                             : 'يمكنك متابعة طلباتك الحالية',
                         style: const TextStyle(
                           color: Color(0xFFD5E4C8),
@@ -204,7 +208,7 @@ class _SellerDashboardState extends State<SellerDashboard> {
           ),
           Heading(
             'وجباتي',
-            subtitle: '${store.ownMeals.length} وجبات في مطبخك',
+            subtitle: '${store.ownMeals.length} وجبات في قائمتك',
             trailing: TextButton.icon(
               onPressed: () => _editMeal(context, store),
               icon: const Icon(Icons.add),
@@ -213,7 +217,7 @@ class _SellerDashboardState extends State<SellerDashboard> {
           ),
           if (store.ownMeals.isEmpty)
             EmptyState(
-              'أول وجبة، أول حكاية',
+              'أضيفي أول وجبة',
               'أضف صورة ووصفاً وسعراً، وحدد عدد الحصص المتوفرة.',
               action: FilledButton.icon(
                 onPressed: () => _editMeal(context, store),
@@ -235,7 +239,7 @@ class _SellerDashboardState extends State<SellerDashboard> {
           if (orders.isEmpty)
             const EmptyState(
               'بانتظار أول طلب',
-              'ستظهر الطلبات هنا بمجرد أن يطلب أحدهم من مطبخك.',
+              'ستظهر الطلبات هنا عند طلب إحدى وجباتك.',
               icon: Icons.receipt_long_outlined,
             )
           else
@@ -278,7 +282,7 @@ class _SellerDashboardState extends State<SellerDashboard> {
           OutlinedButton.icon(
             onPressed: () => _editSeller(context, store),
             icon: const Icon(Icons.tune),
-            label: const Text('إعدادات المطبخ والموقع'),
+            label: const Text('إعدادات البائعة والموقع'),
           ),
         ],
       ),
@@ -332,13 +336,13 @@ class _SellerSetup extends StatelessWidget {
     padding: const EdgeInsets.all(20),
     children: [
       EmptyState(
-        'لنفتح باب مطبخك',
-        'أكمل اسم المطبخ وموقعه ومعلومات التواصل، ثم أضف وجباتك لتظهر للزبائن.',
+        'إعداد حساب البائعة',
+        'أكملي اسمك وموقعك ومعلومات التواصل، ثم أضيفي وجباتك لتظهر للزبائن.',
         icon: Icons.storefront_outlined,
         action: FilledButton.icon(
           onPressed: () => _editSeller(context, store),
           icon: const Icon(Icons.add_business_outlined),
-          label: const Text('إعداد المطبخ'),
+          label: const Text('إعداد بيانات البائعة'),
         ),
       ),
     ],
@@ -359,7 +363,7 @@ class MealsView extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
         children: [
           Heading(
-            'وجبات من قلب الدار',
+            'وجباتي',
             subtitle: 'حدّث الحصص يومياً حتى يجد الزبائن المتاح فعلاً.',
           ),
           FilledButton.icon(
@@ -370,8 +374,8 @@ class MealsView extends StatelessWidget {
           const SizedBox(height: 22),
           if (store.ownMeals.isEmpty)
             const EmptyState(
-              'قائمة مطبخك تبدأ هنا',
-              'أضف أول وجبة وأخبرنا بما يجعلها مميزة.',
+              'لا توجد وجبات في قائمتك بعد',
+              'أضيفي أول وجبة مع وصفها وسعرها.',
             )
           else
             for (final meal in store.ownMeals)
@@ -661,7 +665,7 @@ class _SellerEditorPageState extends State<SellerEditorPage> {
         _latitude.text = widget.store.latitude.toString();
         _longitude.text = widget.store.longitude.toString();
       });
-      toast(context, 'تم تحديد الإحداثيات. تأكد أنها موقع المطبخ.');
+      toast(context, 'تم تحديد الإحداثيات. تأكدي من أنها تشير إلى موقعك.');
     } catch (error) {
       if (mounted) toast(context, friendlyError(error));
     } finally {
@@ -688,7 +692,7 @@ class _SellerEditorPageState extends State<SellerEditorPage> {
         'longitude': double.parse(_longitude.text.trim()),
       });
       if (!mounted) return;
-      toast(context, 'تم حفظ معلومات المطبخ.');
+      toast(context, 'تم حفظ معلومات البائعة.');
       Navigator.of(context).pop();
     } catch (error) {
       if (mounted) setState(() => _error = friendlyError(error));
@@ -706,7 +710,7 @@ class _SellerEditorPageState extends State<SellerEditorPage> {
 
   @override
   Widget build(BuildContext context) => PageFrame(
-    title: widget.seller == null ? 'إعداد مطبخي' : 'معلومات المطبخ',
+    title: widget.seller == null ? 'إعداد بياناتي' : 'معلومات البائعة',
     child: Form(
       key: _form,
       child: ListView(
@@ -720,7 +724,7 @@ class _SellerEditorPageState extends State<SellerEditorPage> {
                 SizedBox(width: 14),
                 Expanded(
                   child: Text(
-                    'هذه المعلومات تظهر للزبائن وتساعدهم على الوصول إلى مطبخك والتواصل معك.',
+                    'هذه المعلومات تظهر للزبائن وتساعدهم على الوصول إلى موقعك والتواصل معك.',
                     style: TextStyle(color: green, height: 1.7),
                   ),
                 ),
@@ -732,9 +736,7 @@ class _SellerEditorPageState extends State<SellerEditorPage> {
             controller: _name,
             enabled: !_busy,
             maxLength: 80,
-            decoration: const InputDecoration(
-              labelText: 'اسم المطبخ / البائعة',
-            ),
+            decoration: const InputDecoration(labelText: 'اسم البائعة'),
             validator: (value) => (value?.trim().length ?? 0) < 2
                 ? 'أدخل الاسم من حرفين على الأقل.'
                 : null,
@@ -786,11 +788,11 @@ class _SellerEditorPageState extends State<SellerEditorPage> {
             maxLength: 1000,
             maxLines: 3,
             decoration: const InputDecoration(
-              labelText: 'حكاية مطبخك (اختياري)',
+              labelText: 'نبذة عن البائعة (اختياري)',
             ),
           ),
           const Heading(
-            'موقع المطبخ',
+            'موقع البائعة',
             subtitle: 'راجع الإحداثيات بدقة؛ تظهر على الخريطة للزبائن.',
           ),
           OutlinedButton.icon(
@@ -833,7 +835,7 @@ class _SellerEditorPageState extends State<SellerEditorPage> {
             onChanged: _busy ? null : (value) => setState(() => _open = value),
             title: const Text('متاح لاستقبال الطلبات'),
             subtitle: const Text(
-              'أغلق المطبخ مؤقتاً عند الانشغال أو انتهاء اليوم.',
+              'أوقفي استقبال الطلبات مؤقتاً عند الانشغال أو انتهاء اليوم.',
             ),
           ),
           if (_error != null)
@@ -845,7 +847,7 @@ class _SellerEditorPageState extends State<SellerEditorPage> {
           FilledButton.icon(
             onPressed: _busy || _locating ? null : _save,
             icon: const Icon(Icons.check),
-            label: Text(_busy ? 'جارٍ الحفظ...' : 'حفظ معلومات المطبخ'),
+            label: Text(_busy ? 'جارٍ الحفظ...' : 'حفظ معلومات البائعة'),
           ),
           const SizedBox(height: 20),
         ],
@@ -889,7 +891,7 @@ class _AccountViewState extends State<AccountView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Heading('نحن حول سفرة واحدة'),
+              Heading('المساعدة'),
               Text(
                 'كيف أطلب؟',
                 style: TextStyle(
@@ -899,7 +901,7 @@ class _AccountViewState extends State<AccountView> {
                 ),
               ),
               Text(
-                'اختر مطبخاً مفتوحاً، أضف حصصك إلى السلة، ثم راجع طريقة الاستلام وأرسل الطلب. تابع حالته من تبويب الطلبات.',
+                'اختر بائعة متاحة للطلبات، أضف حصصك إلى السلة، ثم راجع طريقة الاستلام وأرسل الطلب. تابع حالته من تبويب الطلبات.',
                 style: TextStyle(height: 1.9),
               ),
               SizedBox(height: 20),
@@ -1015,8 +1017,8 @@ class _AccountViewState extends State<AccountView> {
                 const SizedBox(height: 8),
                 Text(
                   store.sellerMode
-                      ? 'يمكنك العودة لاكتشاف المطابخ والطلب منها.'
-                      : 'أدر مطبخك ووجباتك وتابع طلبات الزبائن.',
+                      ? 'يمكنك العودة لاكتشاف البائعات والطلب منها.'
+                      : 'أديري بياناتك ووجباتك وتابعي طلبات الزبائن.',
                   style: const TextStyle(color: muted, height: 1.7),
                 ),
                 const SizedBox(height: 16),
@@ -1039,7 +1041,7 @@ class _AccountViewState extends State<AccountView> {
           const SizedBox(height: 18),
           _AccountRow(
             icon: Icons.person_outline,
-            title: seller == null ? 'إعداد معلومات المطبخ' : 'معلومات المطبخ',
+            title: seller == null ? 'إعداد معلومات البائعة' : 'معلومات البائعة',
             subtitle: 'الاسم والموقع والتواصل وساعات العمل',
             onTap: () => _editSeller(context, store),
           ),
@@ -1062,7 +1064,7 @@ class _AccountViewState extends State<AccountView> {
           ),
         const SizedBox(height: 28),
         const Text(
-          'مولات كسكس\nأكل تقليدي.. من قلب بيتنا',
+          'مولات كسكس',
           textAlign: TextAlign.center,
           style: TextStyle(color: muted, height: 1.8),
         ),

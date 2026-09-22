@@ -222,7 +222,7 @@ class Welcome extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: onStart,
                       icon: const Icon(Icons.arrow_back),
-                      label: const Text('اكتشف المطابخ'),
+                      label: const Text('اكتشف البائعات'),
                     ),
                   ),
                 ),
@@ -268,78 +268,15 @@ class _DiscoverState extends State<Discover> {
         padding: const EdgeInsets.fromLTRB(20, 6, 20, 30),
         children: [
           Heading(
-            widget.favoritesOnly ? 'مطابخك المفضلة' : 'أهلاً بك، على سفرتنا',
+            widget.favoritesOnly ? 'البائعات المفضلات' : 'اكتشف البائعات',
             subtitle:
                 '${s.area}  •  ${s.hasLocation ? 'حسب موقعك' : 'المسافات من مركز الحي'}',
           ),
-          if (!widget.favoritesOnly)
-            Container(
-              height: 190,
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                color: green,
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              'طعم يجمعنا',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 30,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const Text(
-                            'وصفات أصيلة، من بيوت قريبة',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Color(0xFFD5E4C8),
-                              height: 1.8,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'طازج اليوم  ✦  محضّر بحب',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Color(0xFFE9C78B),
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 4,
-                    child: Image.asset(
-                      'assets/images/couscous.png',
-                      height: 190,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           const SizedBox(height: 22),
           TextField(
             onChanged: (v) => setState(() => query = v.trim()),
             decoration: const InputDecoration(
-              hintText: 'ابحث عن وجبة أو مطبخ...',
+              hintText: 'ابحث عن وجبة أو بائعة...',
               prefixIcon: Icon(Icons.search),
             ),
           ),
@@ -356,20 +293,20 @@ class _DiscoverState extends State<Discover> {
                   onSelected: (_) => setState(() => category = c),
                 ),
               FilterChip(
-                label: const Text('متاح الآن'),
+                label: const Text('متاحة الآن'),
                 selected: onlyOpen,
                 onSelected: (v) => setState(() => onlyOpen = v),
               ),
             ],
           ),
           Heading(
-            'مطابخ قريبة منك',
-            subtitle: '${sellers.length} مطابخ • لقمة هنية من أيدٍ محلية',
+            'بائعات قريبات منك',
+            subtitle: 'عدد البائعات: ${sellers.length}',
             trailing: const Icon(Icons.near_me_outlined, color: green),
           ),
           if (sellers.isEmpty)
             const EmptyState(
-              'لا توجد مطابخ هنا',
+              'لا توجد بائعات هنا',
               'جرّب بحثاً آخر أو غيّر الفئة.',
             ),
           LayoutBuilder(
@@ -392,45 +329,10 @@ class _DiscoverState extends State<Discover> {
               );
             },
           ),
-          if (!widget.favoritesOnly)
-            Padding(
-              padding: const EdgeInsets.only(top: 24),
-              child: Panel(
-                color: sage,
-                child: Row(
-                  children: [
-                    const Icon(Icons.groups_outlined, color: green, size: 32),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'جمعة الأهل تستاهل',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                          Text(
-                            'اجمع حصصك من أكثر من مطبخ',
-                            style: TextStyle(color: muted),
-                          ),
-                        ],
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => familyDialog(context, s),
-                      child: const Text('طلب عائلي'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           const SizedBox(height: 26),
           const Center(
             child: Text(
-              'مولات كسكس  •  أكل تقليدي بطعم الأصالة',
+              'مولات كسكس',
               style: TextStyle(color: muted, fontSize: 12),
             ),
           ),
@@ -472,7 +374,7 @@ class SellerCard extends StatelessWidget {
                   top: 10,
                   right: 10,
                   child: Pill(
-                    seller.open ? '● متاح الآن' : 'مغلق',
+                    seller.open ? '● متاحة الآن' : 'غير متاحة',
                     color: seller.open ? green : muted,
                   ),
                 ),
@@ -512,7 +414,7 @@ class SellerCard extends StatelessWidget {
                 const Icon(Icons.star_rounded, color: gold, size: 19),
                 Text(
                   seller.rating == 0
-                      ? 'جديد'
+                      ? 'جديدة'
                       : seller.rating.toStringAsFixed(1),
                 ),
               ],
@@ -550,64 +452,6 @@ class SellerCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    ),
-  );
-}
-
-Future<void> familyDialog(BuildContext context, AppController s) async {
-  String quantity = '20';
-  String category = 'الكسكس';
-  await showDialog<void>(
-    context: context,
-    builder: (ctx) => StatefulBuilder(
-      builder: (ctx, update) => AlertDialog(
-        title: const Text('طلب يجمع العائلة'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'نوزّع الحصص على المطابخ المتاحة حسب المسافة. ستراجع الأسعار والمطابخ في السلة قبل التأكيد.',
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: category,
-              items: categories
-                  .skip(1)
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                  .toList(),
-              onChanged: (v) => update(() => category = v!),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              initialValue: '20',
-              onChanged: (value) => quantity = value,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'عدد الحصص'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('إلغاء'),
-          ),
-          FilledButton(
-            onPressed: () {
-              try {
-                s.familyOrder(category, int.tryParse(quantity) ?? 0);
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => CartPage(store: s)),
-                );
-              } catch (e) {
-                toast(context, friendlyError(e));
-              }
-            },
-            child: const Text('تجميع الطلب'),
-          ),
-        ],
       ),
     ),
   );
