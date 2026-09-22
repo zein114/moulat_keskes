@@ -27,9 +27,7 @@ class _AppRootState extends State<AppRoot> {
     widget.store.addListener(_onControllerChange);
     unawaited(widget.store.refresh());
     timer = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (!widget.store.demo &&
-          widget.store.signedIn &&
-          !widget.store.loading) {
+      if (!widget.store.demo && !widget.store.loading) {
         unawaited(widget.store.refresh());
       }
     });

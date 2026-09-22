@@ -25,9 +25,12 @@ class AuthRepository {
   String get email => client.auth.currentUser?.email ?? '';
 
   String get redirectUrl {
+    // A browser callback such as http://localhost:8080 points at the phone
+    // itself on Android/iOS. Native builds must always return through the app's
+    // registered deep link, even when the bundled .env configures a web URL.
+    if (!kIsWeb) return 'moulatkeskes://auth-callback/';
     final configured = SupabaseService.setting('AUTH_REDIRECT_URL');
     if (configured.isNotEmpty) return configured;
-    if (!kIsWeb) return 'moulatkeskes://auth-callback/';
     return Uri(
       scheme: Uri.base.scheme,
       host: Uri.base.host,
@@ -52,6 +55,14 @@ class AuthRepository {
     emailRedirectTo: redirectUrl,
     data: {'name': name.trim(), 'role': isSeller ? 'seller' : 'customer'},
   );
+
+  Future<void> resendConfirmation(String email) async {
+    await client.auth.resend(
+      type: OtpType.signup,
+      email: email.trim(),
+      emailRedirectTo: redirectUrl,
+    );
+  }
 
   Future<void> requestPasswordReset(String email) =>
       client.auth.resetPasswordForEmail(email.trim(), redirectTo: redirectUrl);

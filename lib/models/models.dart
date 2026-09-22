@@ -96,7 +96,12 @@ class FoodOrder {
     id: j['id'],
     sellerId: j['seller_id'],
     total: j['total'],
-    items: List<Map<String, dynamic>>.from(j['items']),
+    // JSON objects decoded from Supabase may be Map<dynamic, dynamic>.
+    // Normalize each line before the UI reads meal_id/name/quantity/price.
+    items: (j['items'] as List? ?? const [])
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList(),
     status: j['status'],
     fulfillment: j['fulfillment'],
     address: j['address'] ?? '',

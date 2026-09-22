@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/models.dart';
 
 const green = Color(0xFF075442);
@@ -17,6 +18,13 @@ void toast(BuildContext context, String message) =>
       );
 String friendlyError(Object e) {
   if (e is StateError) return e.message;
+  if (e is PostgrestException) {
+    if (e.code == '42501') {
+      return 'صلاحيات قاعدة البيانات تمنع هذه العملية. تحقق من RLS وطبّق migration.';
+    }
+    if (e.code == 'PGRST116') return 'البيانات المطلوبة غير موجودة في قاعدة البيانات.';
+    return 'خطأ قاعدة البيانات (${e.code}): ${e.message}';
+  }
   final text = e.toString();
   if (text.contains('price changed')) {
     return 'تغير سعر وجبة. حدّث السلة وراجع الإجمالي قبل التأكيد.';

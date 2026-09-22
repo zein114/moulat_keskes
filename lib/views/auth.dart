@@ -25,6 +25,8 @@ class _AuthPageState extends State<AuthPage> {
   bool _reset = false;
   bool _busy = false;
   bool _obscure = true;
+  bool _confirmationPending = false;
+  String _confirmationEmail = '';
   String _role = 'customer';
   String? _error;
   String? _message;
@@ -70,6 +72,8 @@ class _AuthPageState extends State<AuthPage> {
         if (needsConfirmation) {
           setState(() {
             _signup = false;
+            _confirmationPending = true;
+            _confirmationEmail = _email.text.trim();
             _password.clear();
             _message =
                 'تحقّق من بريدك لتأكيد الحساب، ثم عد لتسجيل الدخول. إذا كان لديك حساب بالفعل، استخدم تسجيل الدخول أو استعادة كلمة المرور.';
@@ -86,6 +90,27 @@ class _AuthPageState extends State<AuthPage> {
       if (mounted) {
         setState(() => _error = AuthController.errorMessage(error));
       }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _resendConfirmation() async {
+    if (_busy || _confirmationEmail.isEmpty) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+      _message = null;
+    });
+    try {
+      await _auth.resendConfirmation(_confirmationEmail);
+      if (mounted) {
+        setState(() {
+          _message = 'تم إرسال رسالة تأكيد جديدة. افتح آخر رسالة فقط.';
+        });
+      }
+    } catch (error) {
+      if (mounted) setState(() => _error = AuthController.errorMessage(error));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -308,6 +333,13 @@ class _AuthPageState extends State<AuthPage> {
                                       ),
                                     ),
                                   ),
+                                ),
+                              ],
+                              if (_confirmationPending && !widget.recovery) ...[
+                                const SizedBox(height: 8),
+                                TextButton(
+                                  onPressed: _busy ? null : _resendConfirmation,
+                                  child: const Text('إعادة إرسال رسالة التأكيد'),
                                 ),
                               ],
                               const SizedBox(height: 24),

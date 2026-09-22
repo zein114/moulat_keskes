@@ -20,9 +20,9 @@ Future<void> openExternal(BuildContext context, Uri uri) async {
 }
 
 class LocationPage extends StatefulWidget {
-  const LocationPage({super.key, required this.store, this.seller});
+  const LocationPage({super.key, required this.store, this.sellerId});
   final AppController store;
-  final Seller? seller;
+  final String? sellerId;
   @override
   State<LocationPage> createState() => _LocationPageState();
 }
@@ -38,15 +38,12 @@ class _LocationPageState extends State<LocationPage> {
     if (_mapReady) _mapController.move(point, 14);
   }
 
-  void _showAll(List<Seller> sellers) {
+  void _showAll(List<Seller> sellers, LatLng customerLocation) {
     if (!_mapReady || sellers.isEmpty) return;
-    if (sellers.length == 1) {
-      _focus(LatLng(sellers.first.lat, sellers.first.lng));
-      return;
-    }
     _mapController.fitCamera(
       CameraFit.coordinates(
         coordinates: [
+          customerLocation,
           for (final seller in sellers) LatLng(seller.lat, seller.lng),
         ],
         padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 80),
@@ -66,10 +63,16 @@ class _LocationPageState extends State<LocationPage> {
     listenable: widget.store,
     builder: (context, _) {
       final s = widget.store;
-      final target = s.demo ? null : widget.seller;
+      final matchingTarget = s.sellers.where(
+        (seller) => seller.id == widget.sellerId,
+      );
+      final target = s.demo || matchingTarget.isEmpty
+          ? null
+          : matchingTarget.first;
       final sellers = <Seller>[if (!s.demo) ...s.sellers]
         ..sort((a, b) => s.distance(a).compareTo(s.distance(b)));
       final nearest = sellers.isEmpty ? null : sellers.first;
+      final customerLocation = LatLng(s.latitude, s.longitude);
       final sellerLocations = sellers
           .map((seller) => '${seller.id}:${seller.lat}:${seller.lng}')
           .toSet();
@@ -79,7 +82,7 @@ class _LocationPageState extends State<LocationPage> {
               !sellerLocations.containsAll(_mappedSellerLocations))) {
         _mappedSellerLocations = sellerLocations;
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _showAll(sellers);
+          if (mounted) _showAll(sellers, customerLocation);
         });
       }
       final selected = sellers.where(
@@ -119,6 +122,7 @@ class _LocationPageState extends State<LocationPage> {
                     initialCameraFit: target == null && sellers.length > 1
                         ? CameraFit.coordinates(
                             coordinates: [
+                              customerLocation,
                               for (final seller in sellers)
                                 LatLng(seller.lat, seller.lng),
                             ],
@@ -181,7 +185,7 @@ class _LocationPageState extends State<LocationPage> {
                                           border: Border.all(color: green),
                                         ),
                                         child: Text(
-                                          seller.name,
+                                          '${seller.name} • ${s.distance(seller).toStringAsFixed(1)} كم',
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: const TextStyle(
@@ -274,7 +278,7 @@ class _LocationPageState extends State<LocationPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => _showAll(sellers),
+                      onPressed: () => _showAll(sellers, customerLocation),
                       icon: const Icon(Icons.map_outlined),
                       label: const Text('عرض الكل'),
                     ),
@@ -344,18 +348,24 @@ class _LocationPageState extends State<LocationPage> {
                       ? 'شغّل التطبيق باتصال Supabase لعرض البائعات المسجلات.'
                       : 'ستظهر مواقع البائعات هنا عند إضافتها.',
                 ),
-              for (final seller in sellers)
+              for (var index = 0; index < sellers.length; index++)
                 ListTile(
                   leading: Icon(
                     Icons.location_pin,
-                    color: seller.id == activeSeller?.id ? gold : green,
+                    color: sellers[index].id == activeSeller?.id ? gold : green,
                   ),
-                  title: Text(seller.name),
-                  subtitle: Text(seller.area),
-                  trailing: Text('${s.distance(seller).toStringAsFixed(1)} كم'),
+                  title: Text(sellers[index].name),
+                  subtitle: Text(
+                    index == 0
+                        ? '${sellers[index].area} • الأقرب إليك'
+                        : sellers[index].area,
+                  ),
+                  trailing: Text(
+                    '${s.distance(sellers[index]).toStringAsFixed(1)} كم',
+                  ),
                   onTap: () {
-                    setState(() => _selectedSellerId = seller.id);
-                    _focus(LatLng(seller.lat, seller.lng));
+                    setState(() => _selectedSellerId = sellers[index].id);
+                    _focus(LatLng(sellers[index].lat, sellers[index].lng));
                   },
                 ),
               if (activeSeller != null)
@@ -484,7 +494,7 @@ class SellerPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) =>
-                          LocationPage(store: store, seller: seller),
+                          LocationPage(store: store, sellerId: seller.id),
                     ),
                   ),
                 ),

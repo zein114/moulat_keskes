@@ -85,6 +85,10 @@ class AppController extends ChangeNotifier {
     try {
       final s = await vendors!.fetchSellers();
       final m = await vendors!.fetchMeals();
+      // Keep the public catalog usable even if the signed-in profile or
+      // orders query fails. Those queries have stricter RLS than sellers/meals.
+      sellers = s;
+      meals = m;
       UserProfile? profile;
       List<FoodOrder> nextOrders = [];
       if (refreshUser != null) {
@@ -96,8 +100,6 @@ class AppController extends ChangeNotifier {
           client?.auth.currentUser?.id != refreshUser) {
         return;
       }
-      sellers = s;
-      meals = m;
       final removedMeals = cart.keys
           .where((id) => !meals.any((meal) => meal.id == id))
           .toList();
@@ -120,10 +122,27 @@ class AppController extends ChangeNotifier {
       }
     } catch (e) {
       if (version != _refreshVersion || _disposed) return;
-      error = 'تعذر تحميل البيانات. تحقق من الاتصال وإعداد قاعدة البيانات.';
+      error = _refreshError(e);
     }
     loading = false;
     notifyListeners();
+  }
+
+  String _refreshError(Object error) {
+    final text = error.toString();
+    if (text.contains('PGRST116')) {
+      return 'تم الاتصال بقاعدة البيانات، لكن ملف الحساب غير موجود. أعد إنشاء الحساب بعد تشغيل migration قاعدة البيانات.';
+    }
+    if (text.contains('42501') || text.toLowerCase().contains('permission denied')) {
+      return 'تم الاتصال بقاعدة البيانات، لكن صلاحيات RLS تمنع هذه العملية. طبّق migration قاعدة البيانات كاملة.';
+    }
+    if (text.contains('42P01') || text.contains('PGRST205')) {
+      return 'جداول قاعدة البيانات غير موجودة. شغّل migration Supabase ثم أعد تشغيل التطبيق.';
+    }
+    if (text.contains('SocketException') || text.contains('Failed host lookup')) {
+      return 'تعذر الوصول إلى Supabase من الجهاز. تحقق من الإنترنت أو DNS.';
+    }
+    return 'تعذر تحميل البيانات من قاعدة البيانات: $text';
   }
 
   void switchMode() {

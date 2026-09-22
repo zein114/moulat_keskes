@@ -50,6 +50,9 @@ class AuthController {
   Future<void> requestPasswordReset(String email) =>
       _auth.requestPasswordReset(email);
 
+  Future<void> resendConfirmation(String email) =>
+      _auth.resendConfirmation(email);
+
   Future<void> updatePassword(String password) async {
     await _auth.updatePassword(password);
     store.recovering = false;
@@ -79,6 +82,15 @@ class AuthController {
         'session_not_found' => 'انتهت صلاحية الرابط. اطلب رابط استعادة جديدا.',
         _ => 'تعذر إتمام العملية. تحقق من البيانات والاتصال ثم حاول مجددا.',
       };
+    }
+    if (error is PostgrestException) {
+      if (error.code == '42501') {
+        return 'تم تسجيل الدخول، لكن صلاحيات قاعدة البيانات تمنع الوصول. طبّق migration وRLS من Supabase.';
+      }
+      if (error.code == 'PGRST116') {
+        return 'الحساب موجود لكن ملفه غير موجود في profiles. شغّل trigger/migration ثم أعد المحاولة.';
+      }
+      return 'خطأ قاعدة البيانات (${error.code}): ${error.message}';
     }
     return 'تعذر الاتصال. تحقق من الإنترنت ثم حاول مجددا.';
   }
